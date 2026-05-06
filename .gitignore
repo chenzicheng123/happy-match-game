@@ -1,0 +1,23 @@
+# 编译生成的临时文件
+x64/
+Debug/
+Release/
+*.exe
+*.pdb
+*.ilk
+*.idb
+
+# VS/Qt 配置文件
+.vs/
+*.suo
+*.user
+*.pro.user
+*.pro.user.*
+
+# 其他临时文件
+*.log
+*.tmp
+*.bak
+
+# 屏蔽视频大文件
+photos/*.mp4
