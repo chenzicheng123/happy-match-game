@@ -18,6 +18,3 @@ Release/
 *.log
 *.tmp
 *.bak
-
-# 屏蔽视频大文件
-photos/*.mp4
