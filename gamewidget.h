@@ -10,7 +10,7 @@
 
 #define ROWS 8
 #define COLS 8
-#define CELL_SIZE 60
+#define CELL_SIZE 90
 #define ICON_COUNT 6
 
 class GameWidget : public QWidget {
@@ -30,6 +30,7 @@ private:
     QVector<QPixmap>icons;
     void loadicons();
     void initMap();
+
     bool isAdjacent(int x1, int y1, int x2, int y2);
 
     void swap(int x1, int y1, int x2, int y2);

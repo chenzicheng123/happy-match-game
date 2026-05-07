@@ -1,9 +1,9 @@
 #include <QApplication>
-#include "gamewidget.h"
+#include "StartWidget.h"
 
 int main(int argc, char* argv[]) {
     QApplication a(argc, argv);
-    GameWidget w;
+    StartWidget w;
     w.show();
     return a.exec();
 }

@@ -92,6 +92,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="StartWidget.cpp" />
     <QtRcc Include="QTcodes.qrc" />
     <QtUic Include="QTcodes.ui" />
     <QtMoc Include="QTcodes.h" />
@@ -103,12 +104,16 @@
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
       <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
     </ClCompile>
+    <QtUic Include="StartWidget.ui" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Project9\Project9.sln" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="gamewidget.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="StartWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

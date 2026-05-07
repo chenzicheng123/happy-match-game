@@ -1,3 +1,5 @@
 <RCC>
-    <qresource prefix="/QTcodes"/>
+    <qresource prefix="/QTcodes">
+        <file>photos/start.jpg</file>
+    </qresource>
 </RCC>

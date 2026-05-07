@@ -1,12 +1,14 @@
 ﻿#include "gamewidget.h"
 
 GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), firstSelected(-1, -1) {
-        setFixedSize(COLS * CELL_SIZE, ROWS * CELL_SIZE + 40);
-        setWindowTitle("开心消消乐");
-        loadicons();
-        initMap();
         this->setFixedSize(COLS * CELL_SIZE, ROWS * CELL_SIZE + 40);
         this->setWindowTitle("开心消消乐");
+        loadicons();
+        initMap();
+        QTimer::singleShot(500, this, [=]() {
+            QTimer::singleShot(300, this, [=]() {dropDown();
+            QTimer::singleShot(300, this, &GameWidget::fillEmpty); });
+            });
     }
 
     void GameWidget:: paintEvent(QPaintEvent*) {
@@ -52,8 +54,8 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 else {
                     steps--;
                     update();
-                    QTimer::singleShot(300, this, &GameWidget::dropDown);
-                    QTimer::singleShot(600, this, &GameWidget::fillEmpty);
+                    QTimer::singleShot(300, this, [=]() {dropDown();
+                    QTimer::singleShot(300, this, &GameWidget::fillEmpty); });
                 }
             }
             firstSelected = { -1, -1 };
@@ -81,10 +83,11 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 map[i][j] = rand() % ICON_COUNT + 1;
             }
         }
-        while (checkAndClear()) {
+        checkAndClear();
+        /*while (checkAndClear()) {
             dropDown();
             fillEmpty();
-        }
+        }*/
     }
 
     bool GameWidget:: isAdjacent(int x1, int y1, int x2, int y2) {
@@ -148,20 +151,6 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
     }
     void GameWidget::fillEmpty()
     {
-        // ===================== 关键1：一进函数先检查游戏是否结束 =====================
-        // 只要步数用完了，立刻弹窗+重置+return，不跑后面任何代码！
-        if (steps <= 0)
-        {
-            // 用延迟弹窗，让函数先退出，主线程不被阻塞，弹窗再弹出来
-            QTimer::singleShot(0, this, [this]() {
-                QMessageBox::information(this, "Game Over", "Final Score: " + QString::number(score));
-                initMap();
-                score = 0;
-                steps = 30;
-                });
-            return; // 直接退出，后面的循环、填充代码一行都不跑！
-        }
-
         // ===================== 你原来的填充格子代码，完全不动 =====================
         for (int i = 0; i < ROWS; i++)
         {
@@ -173,38 +162,33 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 }
             }
         }
-
-        // ===================== 关键2：消除循环加三重保险，绝对不会无限循环 =====================
-        bool hasCleared;
-        int maxLoopCount = 20; // 最多连锁消除20次，超过就强制停止，防止死循环
-        do
+        update();
+        if (checkAndClear())
         {
-            hasCleared = checkAndClear();
-            if (hasCleared)
-            {
+            update(); // 标记消除后，再刷新一次
+            QTimer::singleShot(300, this, [=]() {
                 dropDown();
-            }
-            maxLoopCount--; // 每次循环次数减1
-        } while (
-            hasCleared       // 条件1：还有可消除的匹配
-            && steps > 0     // 条件2：步数还没用完
-            && maxLoopCount > 0 // 条件3：没超过最大连锁次数
-            );
-
-        // ===================== 关键3：循环结束后再检查一次，防止漏掉 =====================
+                QTimer::singleShot(300, this, &GameWidget::fillEmpty);
+                });
+        }
+        // ========== 【4. 末尾这段你写的循环后检查代码，完全不动！！】 ==========
         if (steps <= 0)
         {
             QTimer::singleShot(0, this, [this]() {
-                QMessageBox::information(this, "Game Over", "Final Score: " + QString::number(score));
-                initMap();
+                QMessageBox::information(this, "Game Over", "Final Score");
                 score = 0;
                 steps = 30;
+                initMap();
+                update();
+                QTimer::singleShot(300, this, [=]() {
+                    dropDown();
+                QTimer::singleShot(300, this, &GameWidget::fillEmpty);
+                    });
                 });
             return;
         }
-
-        // ===================== 只刷新一次界面 =====================
-        update();
     }
+        
+   
     
     /* taskkill / f / im QTcodes.exe */
