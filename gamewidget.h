@@ -7,7 +7,11 @@
 #include <QTimer>
 #include <QMessageBox>
 #include<QPixmap>
-
+#include<QLabel>
+#include <QDesktopServices>
+#include<QUrl>
+#pragma comment(lib,"winmm.lib")
+#include<windows.h>
 #define ROWS 8
 #define COLS 8
 #define CELL_SIZE 90
@@ -23,13 +27,19 @@ protected:
     void mousePressEvent(QMouseEvent* e) override;
 
 private:
+    bool isgameover = false;
+    QPoint highlightcell;
     QVector<QVector<int>> map;
     QPoint firstSelected;
     int score;
     int steps;
     QVector<QPixmap>icons;
     void loadicons();
+
     void initMap();
+   
+    void playbgm(QString path);
+    
 
     bool isAdjacent(int x1, int y1, int x2, int y2);
 

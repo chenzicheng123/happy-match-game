@@ -1,8 +1,12 @@
 ﻿#include "gamewidget.h"
 
+
 GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), firstSelected(-1, -1) {
         this->setFixedSize(COLS * CELL_SIZE, ROWS * CELL_SIZE + 40);
         this->setWindowTitle("开心消消乐");
+        playbgm("D:\\Users\\chenz\\source\\repos\\Qt_project\\QTcodes\\photos\\beijing.wav");
+        firstSelected=QPoint{ -1,-1 };
+        highlightcell = QPoint{ -1,-1 };
         loadicons();
         initMap();
         QTimer::singleShot(500, this, [=]() {
@@ -13,8 +17,9 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
 
     void GameWidget:: paintEvent(QPaintEvent*) {
         QPainter p(this);
+        p.fillRect(this->rect(), QColor(255, 200, 220));
         p.setPen(Qt::black);
-        p.setFont(QFont("Microsoft YaHei", 12));
+        p.setFont(QFont("Microsoft YaHei", 18));
         p.drawText(10, 25, QString("Steps Left: %1   Score: %2").arg(QString::number(steps)).arg(QString::number(score)));
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
@@ -30,36 +35,84 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 }
             }
         }
-    }
+        if (highlightcell.x() != -1) {
+            int hx = highlightcell.x() * CELL_SIZE;
+            int hy = highlightcell.y() * CELL_SIZE + 40;
+            p.setPen(QPen(Qt::red, 4));
+            p.drawRect(hx, hy, CELL_SIZE, CELL_SIZE);
+       }
 
+    } 
+   
+
+    void GameWidget::playbgm(QString path) {
+
+        PlaySound((LPCWSTR)path.utf16(), NULL, SND_ASYNC | SND_LOOP);
+    }
+   
     // 已修复Qt 6的鼠标事件API
-    void GameWidget::mousePressEvent(QMouseEvent* e) {
+  
+    void GameWidget::mousePressEvent(QMouseEvent* e)
+    {
+       
         if (steps <= 0) return;
+
         int col = e->position().x() / CELL_SIZE;
         int row = (e->position().y() - 40) / CELL_SIZE;
+        QPoint click = { col, row };
 
-        if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
-
-        if (firstSelected.x() == -1) {
-            firstSelected = { col, row };
+        // 越界 → 清空所有
+        if (row < 0 || row >= ROWS || col < 0 || col >= COLS)
+        {
+            return;
         }
-        else {
-            int x1 = firstSelected.x();
-            int y1 = firstSelected.y();
-            if (isAdjacent(x1, y1, col, row)) {
-                swap(x1, y1, col, row);
-                if (!checkAndClear()) {
-                    swap(x1, y1, col, row);
+
+        // ===================== 【1. 高亮逻辑：只控制红框，和交换无关】 =====================
+        // 逻辑：点自己=切换亮/灭；点别人=点亮新的
+        if (firstSelected.x() == -1)
+        {
+            // 没有选中：直接点亮当前
+            highlightcell = click;
+            firstSelected = click;
+        }
+        else
+        {
+            // 已经有选中
+            if (firstSelected == click)
+            {
+                // 点同一个：取消高亮+取消选中
+                firstSelected = { -1, -1 };
+                highlightcell = { -1, -1 };
+            }
+            else if (isAdjacent(firstSelected.x(), firstSelected.y(), col, row))
+            {
+                // ===================== 【2. 相邻格子：执行交换！！】 =====================
+                swap(firstSelected.x(), firstSelected.y(), col, row);
+                if (checkAndClear()) {
+                    /*相邻能换，消除*/
+                    steps--;
+                    QTimer::singleShot(300, this, [=]() {
+                        dropDown();
+                        QTimer::singleShot(300, this, &GameWidget::fillEmpty);
+                        });
+                    firstSelected = { -1,-1 };
+                    highlightcell = { -1,-1 };
                 }
                 else {
-                    steps--;
-                    update();
-                    QTimer::singleShot(300, this, [=]() {dropDown();
-                    QTimer::singleShot(300, this, &GameWidget::fillEmpty); });
+                    /*相邻不能换回来，红框切换*/
+                    swap(firstSelected.x(), firstSelected.y(), col, row);
+                    firstSelected = click;
+                    highlightcell = click;
+
                 }
             }
-            firstSelected = { -1, -1 };
-        }
+            else {
+                /*不相邻，切换红框*/
+                firstSelected = click;
+                highlightcell = click;
+            }
+            }
+               
         update();
     }
     void GameWidget::loadicons() {
@@ -149,6 +202,8 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         }
         update();
     }
+   
+
     void GameWidget::fillEmpty()
     {
         // ===================== 你原来的填充格子代码，完全不动 =====================
@@ -171,23 +226,39 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 QTimer::singleShot(300, this, &GameWidget::fillEmpty);
                 });
         }
-        // ========== 【4. 末尾这段你写的循环后检查代码，完全不动！！】 ==========
-        if (steps <= 0)
+       
+        if (steps <= 0 && !isgameover)
         {
-            QTimer::singleShot(0, this, [this]() {
-                QMessageBox::information(this, "Game Over", "Final Score");
+            // 立刻锁死，防止重复触发弹窗，只弹1次
+            isgameover = true;
+
+            // 【关键】用定时器！不卡界面！不破坏消除动画！！
+            QTimer::singleShot(0, this, [=]() {
+                // 弹出窗口（中文小写ok，只点1次）
+                QMessageBox::information(this, "Game Over", "游戏结束！");
+
+                // 关闭弹窗后 打开猫咪视频
+                QString videoPath = "./photos/maomi.kiss.mp4";
+                QDesktopServices::openUrl(QUrl::fromLocalFile(videoPath));
+
+                // 最后执行游戏重置，和弹窗完全分离，绝对不会影响动画
                 score = 0;
                 steps = 30;
                 initMap();
+                dropDown();
+                fillEmpty();
                 update();
-                QTimer::singleShot(300, this, [=]() {
-                    dropDown();
-                QTimer::singleShot(300, this, &GameWidget::fillEmpty);
-                    });
+
+                // 解锁
+                isgameover = false;
                 });
+
             return;
         }
     }
+
+        
+    
         
    
     
