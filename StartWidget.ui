@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>720</width>
-    <height>760</height>
+    <width>719</width>
+    <height>759</height>
    </rect>
   </property>
   <property name="font">
@@ -26,51 +26,71 @@ border:none;</string>
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>0</y>
-     <width>721</width>
-     <height>461</height>
+     <y>-10</y>
+     <width>731</width>
+     <height>481</height>
     </rect>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">BACKGROUND:TRANSPARENT;
-BORDER:NONE;
-</string>
+    <string notr="true">QLabel{image:alpha(255,255,1);brightness:120%;contrast:110%}</string>
    </property>
    <property name="text">
     <string/>
    </property>
    <property name="pixmap">
-    <pixmap>photos/title.jpg</pixmap>
+    <pixmap>photos/t.jpg</pixmap>
    </property>
    <property name="scaledContents">
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QLabel" name="lab_play">
+  <widget class="QLabel" name="label_1">
    <property name="geometry">
     <rect>
      <x>-10</x>
      <y>380</y>
      <width>741</width>
-     <height>381</height>
+     <height>201</height>
     </rect>
    </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
+   <property name="styleSheet">
+    <string notr="true">QLabel{image:alpha(255,255,1);brightness:120%;contrast:110%}</string>
    </property>
    <property name="text">
     <string/>
    </property>
    <property name="pixmap">
-    <pixmap>photos/start.jpg</pixmap>
+    <pixmap>photos/chuangguan.jpg</pixmap>
    </property>
    <property name="scaledContents">
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>570</y>
+     <width>721</width>
+     <height>191</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>photos/wujin.jpg</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <zorder>label</zorder>
+  <zorder>label_2</zorder>
+  <zorder>label_1</zorder>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

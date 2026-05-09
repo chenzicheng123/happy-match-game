@@ -15,12 +15,17 @@
 #define ROWS 8
 #define COLS 8
 #define CELL_SIZE 90
-#define ICON_COUNT 6
+#define ICON_COUNT 7
 
 class GameWidget : public QWidget {
     Q_OBJECT
 public:
     explicit GameWidget(QWidget* parent = nullptr);
+    bool iswujinmoshi;
+    int mubiaofenshu;
+    int dangqianguanqia;
+    int score;
+    int steps;
 
 protected:
     void paintEvent(QPaintEvent*) override;
@@ -28,19 +33,24 @@ protected:
 
 private:
     bool isgameover = false;
+    
     QPoint highlightcell;
     QVector<QVector<int>> map;
+ 
     QPoint firstSelected;
-    int score;
-    int steps;
+    
     QVector<QPixmap>icons;
     void loadicons();
 
     void initMap();
    
     void playbgm(QString path);
-    
+    void dadaofenshu();
 
+    void nextlevel();
+
+    void playmaomi();
+ 
     bool isAdjacent(int x1, int y1, int x2, int y2);
 
     void swap(int x1, int y1, int x2, int y2);
@@ -50,5 +60,10 @@ private:
     void dropDown();
 
     void fillEmpty();
+
+    void zhadan(int x, int y);
 };
+
+
+
 #endif

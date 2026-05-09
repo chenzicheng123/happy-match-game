@@ -1,7 +1,8 @@
 ﻿#include "gamewidget.h"
 
 
-GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), firstSelected(-1, -1) {
+GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(0), firstSelected(-1, -1),
+iswujinmoshi(false),mubiaofenshu(0),dangqianguanqia(1){
         this->setFixedSize(COLS * CELL_SIZE, ROWS * CELL_SIZE + 40);
         this->setWindowTitle("开心消消乐");
         playbgm("D:\\Users\\chenz\\source\\repos\\Qt_project\\QTcodes\\photos\\beijing.wav");
@@ -9,9 +10,9 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         highlightcell = QPoint{ -1,-1 };
         loadicons();
         initMap();
-        QTimer::singleShot(500, this, [=]() {
-            QTimer::singleShot(300, this, [=]() {dropDown();
-            QTimer::singleShot(300, this, &GameWidget::fillEmpty); });
+        QTimer::singleShot(200, this, [=]() {
+            QTimer::singleShot(100, this, [=]() {dropDown();
+            QTimer::singleShot(100, this, &GameWidget::fillEmpty); });
             });
     }
 
@@ -19,15 +20,24 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         QPainter p(this);
         p.fillRect(this->rect(), QColor(255, 200, 220));
         p.setPen(Qt::black);
-        p.setFont(QFont("Microsoft YaHei", 18));
-        p.drawText(10, 25, QString("Steps Left: %1   Score: %2").arg(QString::number(steps)).arg(QString::number(score)));
+        p.setFont(QFont("Microsoft YaHei", 15));
+        if (!iswujinmoshi) {
+            p.drawText(10, 25, QString("当前关卡: %1  剩余步数: %2  目标分数: %3   当前分数: %4").arg(QString::number(dangqianguanqia)).arg(QString::number(steps)).arg(QString::number(mubiaofenshu)).arg(QString::number(score)));
+        }
+        else {
+            p.drawText(10, 25, QString("无尽模式   当前分数: %1").arg(score));
+
+        }
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 int x = j * CELL_SIZE;
                 int y = i * CELL_SIZE + 40;
                 p.drawRect(x, y, CELL_SIZE, CELL_SIZE);
                 int idx = map[i][j];
-                if (idx >= 1 && idx <= ICON_COUNT && !icons[idx].isNull()) {
+                if (idx == 8) {
+                    p.drawPixmap(x + 2, y + 2, icons[8]);
+                }
+                else if (idx >= 1 && idx <= ICON_COUNT && !icons[idx].isNull()) {
                     p.drawPixmap(x + 2, y + 2, icons[idx]);
                 }
                 else {
@@ -54,8 +64,8 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
   
     void GameWidget::mousePressEvent(QMouseEvent* e)
     {
-       
-        if (steps <= 0) return;
+      
+      
 
         int col = e->position().x() / CELL_SIZE;
         int row = (e->position().y() - 40) / CELL_SIZE;
@@ -66,8 +76,16 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         {
             return;
         }
+        if (map[row][col] == 8) {
+            zhadan(row, col);
+            steps--;
+            map[row][col] = 0;
+            firstSelected = QPoint{ -1,-1 };
+            highlightcell = QPoint{ -1,-1 };
+            update();
+            return;
+        }
 
-        // ===================== 【1. 高亮逻辑：只控制红框，和交换无关】 =====================
         // 逻辑：点自己=切换亮/灭；点别人=点亮新的
         if (firstSelected.x() == -1)
         {
@@ -91,10 +109,23 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 if (checkAndClear()) {
                     /*相邻能换，消除*/
                     steps--;
+
+
+                    if (steps <= 0)dadaofenshu();
                     QTimer::singleShot(300, this, [=]() {
                         dropDown();
-                        QTimer::singleShot(300, this, &GameWidget::fillEmpty);
+                        QTimer::singleShot(300, this, [=]() {
+                            fillEmpty();
+
+                            QTimer::singleShot(300, this, [=]() {
+                                if (checkAndClear()) {
+                                    dropDown();
+                                    fillEmpty();
+                                }
+                                });
+                            });
                         });
+                
                     firstSelected = { -1,-1 };
                     highlightcell = { -1,-1 };
                 }
@@ -116,8 +147,8 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         update();
     }
     void GameWidget::loadicons() {
-        icons.resize(ICON_COUNT + 1);
-        for (int i = 1; i <= ICON_COUNT; i++) {
+        icons.resize(10);
+        for (int i = 1; i <= 7; i++) {
             QString path = QString("photos/%1.jpg").arg(i);
             QPixmap pix(path);
             if (!pix.isNull())
@@ -128,6 +159,8 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 icons[i] = QPixmap();
             }
         }
+        QPixmap bomb("photos/8.jpg");
+        icons[8] = bomb.scaled(CELL_SIZE - 4, CELL_SIZE - 4, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
     void GameWidget::initMap() {
         map.resize(ROWS, QVector<int>(COLS));
@@ -154,16 +187,22 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         map[y1][x1] = map[y2][x2];
         map[y2][x2] = t;
     }
-
-    bool GameWidget:: checkAndClear() {
+   bool GameWidget::checkAndClear() {
         bool cleared = false;
-        QVector<QVector<bool>> toClear(ROWS, QVector<bool>(COLS, false));
+        QVector<QVector<bool>>toClear(ROWS, QVector<bool>(COLS, false));
 
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS - 2; j++) {
                 int v = map[i][j];
+                if (v == 0||v==8) continue;
                 if (v && v == map[i][j + 1] && v == map[i][j + 2]) {
-                    toClear[i][j] = toClear[i][j + 1] = toClear[i][j + 2] = true;
+                    if (j + 3 < COLS && v == map[i][j + 3]) {
+                         map[i][ j + 1]=8;
+                        toClear[i][j] =toClear[i][j + 2] = toClear[i][j + 3] = true;
+                    }
+                    else {
+                        toClear[i][j] = toClear[i][j + 1] = toClear[i][j + 2] = true;
+                        }
                     cleared = true;
                 }
             }
@@ -172,22 +211,179 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         for (int j = 0; j < COLS; j++) {
             for (int i = 0; i < ROWS - 2; i++) {
                 int v = map[i][j];
+                if (v == 0||v==8) continue;
                 if (v && v == map[i + 1][j] && v == map[i + 2][j]) {
-                    toClear[i][j] = toClear[i + 1][j] = toClear[i + 2][j] = true;
+                    if (i + 3 < ROWS && v == map[i + 3][j]) {
+                        map[i + 1] [j]=8;
+                        toClear[i][j] = toClear[i + 2][j] = toClear[i + 3][j] = true;
+                    }
+                    else {
+                        toClear[i][j] = toClear[i + 1][j] = toClear[i + 2][j] = true;
+                    }
                     cleared = true;
                 }
             }
         }
 
         if (cleared) {
-            for (int i = 0; i < ROWS; i++)
-                for (int j = 0; j < COLS; j++)
-                    if (toClear[i][j]) { map[i][j] = 0; score += 10; }
+           
+                for (int i = 0; i < ROWS; i++)
+                {
+                    for (int j = 0; j < COLS; j++)
+                    {
+                        if (toClear[i][j])
+                        {
+                            if (map[i][j] == 8) {
+                                zhadan(i, j);
+                            }
+                            map[i][j] = 0; 
+                            if(!isgameover)score += 10;
+                        }
+                    }
+                }  
         }
         return cleared;
     }
+   void GameWidget::zhadan(int x, int y)
+   {
+       if (x < 0 || x >= ROWS || y < 0 || y >= COLS) return;
 
-    void GameWidget::dropDown() {
+       // ========== 第一步：标记要炸的格子，触发粉色空白（和普通消除完全一样） ==========
+       QVector<QVector<bool>> bombClear(ROWS, QVector<bool>(COLS, false));
+       // 标记本行本列
+       for (int j = 0; j < COLS; j++) bombClear[x][j] = true;
+       for (int i = 0; i < ROWS; i++) bombClear[i][y] = true;
+       // 连锁引爆其他炸弹
+       for (int j = 0; j < COLS; j++)
+       {
+           if (map[x][j] == 8 && j != y)
+           {
+               for (int i = 0; i < ROWS; i++) bombClear[i][j] = true;
+           }
+       }
+       for (int i = 0; i < ROWS; i++)
+       {
+           if (map[i][y] == 8 && i != x)
+           {
+               for (int j = 0; j < COLS; j++) bombClear[i][j] = true;
+           }
+       }
+
+       update(); // 这里立刻画出整行整列粉色
+       for (int i = 0; i < ROWS; i++)
+       {
+           for (int j = 0; j < COLS; j++)
+           {
+               if (bombClear[i][j])
+               {
+                   map[i][j] = 0;
+                  if(!isgameover) score += 10;
+               }
+           }
+       }
+       // 先等200ms下落 → 再等200ms填图标，和初始加载、普通消除的延迟完全一致
+       QTimer::singleShot(200, this, [=]() {
+           dropDown();
+           QTimer::singleShot(200, this, [=]() {
+               fillEmpty();
+               update();
+               dadaofenshu();
+               });
+           });
+   }
+  
+   void GameWidget::dadaofenshu() {
+        if (iswujinmoshi) return;
+        bool fenshudabiao = (score >= mubiaofenshu);
+        bool stepsyongwan = (steps <= 0);
+        if (!isgameover&&fenshudabiao && stepsyongwan) {
+            isgameover = true;
+            score = 0;
+            playmaomi();
+        }
+        else if (stepsyongwan && !fenshudabiao&&!isgameover) {
+            isgameover = true;
+            QTimer::singleShot(0, this, [=]() {
+            int ret = QMessageBox::question(this, "Level Failed!" , 
+                "Do you want to try again?",
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::Yes);
+            if (ret == QMessageBox::Yes) {
+                dangqianguanqia = 1;
+                mubiaofenshu = 1500;
+                steps = 30;;
+                score = 0;
+                firstSelected = QPoint{ -1,-1 };
+                highlightcell = QPoint{ -1,-1 };
+                initMap();
+                dropDown();
+                fillEmpty();
+                update();
+            }
+            else {
+                this->close();
+            }
+            isgameover = false;
+               });
+              
+            }
+        }
+    void GameWidget::nextlevel()
+    { 
+        isgameover = true;
+    
+        score = 0;
+
+        // 1. 关卡 +1
+        dangqianguanqia++;
+
+        // 2. 自动计算当前关 步数、目标分（无限关通用，不用手动写）
+        steps = 30 + (dangqianguanqia - 1) * 5;
+        mubiaofenshu = 1500 + (dangqianguanqia - 1) * 500;
+
+      
+
+        // 3. 重置选中、高亮、地图
+        firstSelected = { -1, -1 };
+        highlightcell = { -1, -1 };
+        initMap();
+        dropDown();
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLS; j++)
+            {
+                if (map[i][j] == 0) {
+                    map[i][j] = rand() % 6 + 1;
+                }
+            }
+        }
+        update();
+
+        isgameover = false;
+    }
+    void GameWidget::playmaomi()
+    {
+        isgameover = true;
+        // 弹窗：选择 下一关 / 关闭（放猫咪视频）
+        int ret = QMessageBox::question(this, "Level Clear",
+            "恭喜通关！\n是否进入下一关？",
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (ret == QMessageBox::Yes)
+        {
+            // 选下一关：正常执行下一关逻辑
+            nextlevel();
+        }
+        else
+        {
+            // 选关闭：播放猫咪视频，然后关闭窗口
+            QString videoPath = "./photos/maomi.kiss.mp4";
+            QDesktopServices::openUrl(QUrl::fromLocalFile(videoPath));
+            this->close();
+        }
+    }
+ 
+    void GameWidget::dropDown()
+    {
         for (int j = 0; j < COLS; j++) {
             int pos = ROWS - 1;
             for (int i = ROWS - 1; i >= 0; i--) {
@@ -203,10 +399,11 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
         update();
     }
    
+    
 
     void GameWidget::fillEmpty()
     {
-        // ===================== 你原来的填充格子代码，完全不动 =====================
+        
         for (int i = 0; i < ROWS; i++)
         {
             for (int j = 0; j < COLS; j++)
@@ -227,35 +424,9 @@ GameWidget::GameWidget(QWidget* parent) : QWidget(parent), score(0), steps(30), 
                 });
         }
        
-        if (steps <= 0 && !isgameover)
-        {
-            // 立刻锁死，防止重复触发弹窗，只弹1次
-            isgameover = true;
-
-            // 【关键】用定时器！不卡界面！不破坏消除动画！！
-            QTimer::singleShot(0, this, [=]() {
-                // 弹出窗口（中文小写ok，只点1次）
-                QMessageBox::information(this, "Game Over", "游戏结束！");
-
-                // 关闭弹窗后 打开猫咪视频
-                QString videoPath = "./photos/maomi.kiss.mp4";
-                QDesktopServices::openUrl(QUrl::fromLocalFile(videoPath));
-
-                // 最后执行游戏重置，和弹窗完全分离，绝对不会影响动画
-                score = 0;
-                steps = 30;
-                initMap();
-                dropDown();
-                fillEmpty();
-                update();
-
-                // 解锁
-                isgameover = false;
-                });
-
             return;
         }
-    }
+    
 
         
     
