@@ -1,6 +1,6 @@
-﻿#ifndef GAMEWIDGET_H
-#define GAMEWIDGET_H
-#include <QWidget>
+#pragma once
+#ifndef GAMEWIDGETS_H
+#define GAMEWIDGETS_H
 #include <QPainter>
 #include <QMouseEvent>
 #include <QVector>
@@ -9,6 +9,8 @@
 #include<QPixmap>
 #include<QLabel>
 #include <QDesktopServices>
+#include <QWidget>
+#include "ui_GameWidgets.h"
 #include<QUrl>
 #pragma comment(lib,"winmm.lib")
 #include<windows.h>
@@ -16,11 +18,18 @@
 #define COLS 8
 #define CELL_SIZE 90
 #define ICON_COUNT 7
-
-class GameWidget : public QWidget {
+#define GAME_W 720
+#define GAME_H 720
+#define WIN_W 1020
+#define WIN_H 910
+#define TITLE 40
+namespace Ui {
+    class GameWidgets;
+}
+class GameWidgets : public QWidget {
     Q_OBJECT
 public:
-    explicit GameWidget(QWidget* parent = nullptr);
+    explicit GameWidgets(QWidget* parent = nullptr);
     bool iswujinmoshi;
     int mubiaofenshu;
     int dangqianguanqia;
@@ -32,25 +41,26 @@ protected:
     void mousePressEvent(QMouseEvent* e) override;
 
 private:
+    Ui::GameWidgets* ui;
     bool isgameover = false;
-    
+
     QPoint highlightcell;
     QVector<QVector<int>> map;
- 
+
     QPoint firstSelected;
-    
+
     QVector<QPixmap>icons;
     void loadicons();
 
     void initMap();
-   
+
     void playbgm(QString path);
     void dadaofenshu();
 
     void nextlevel();
 
     void playmaomi();
- 
+
     bool isAdjacent(int x1, int y1, int x2, int y2);
 
     void swap(int x1, int y1, int x2, int y2);

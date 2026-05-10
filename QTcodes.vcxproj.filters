@@ -26,40 +26,34 @@
     <QtRcc Include="QTcodes.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <QtUic Include="QTcodes.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtMoc Include="QTcodes.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <ClCompile Include="QTcodes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Project9\Project9.sln" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="gamewidget.h">
+    <QtMoc Include="StartWidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="StartWidget.h">
+    <QtMoc Include="GameWidgets.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="gamewidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StartWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameWidgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="StartWidget.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="GameWidgets.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

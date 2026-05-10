@@ -4,23 +4,18 @@
 #include <QPixmap>
 #include <QColor>
 #include "ui_StartWidget.h"
-#include "gamewidget.h"
+#include "GameWidgets.h"
 #include <windows.h>
 #pragma comment(lib,"winmm.lib")
-#include "ui_StartWidget.h"
-#include "gamewidget.h"
-#include <windows.h>
-#pragma comment(lib,"winmm.lib")
-#include <QImage>
-#include <QPixmap>
-#include <QColor>
+
+
 
 StartWidget::StartWidget(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::StartWidgetClass)
 {
     ui->setupUi(this);
-    this->setFixedSize(720, 760);
+    this->setFixedSize(WIN_W, WIN_H);
     ui->label_1->installEventFilter(this);
     ui->label_2->installEventFilter(this);
 
@@ -75,7 +70,7 @@ StartWidget::StartWidget(QWidget* parent)
 bool StartWidget::eventFilter(QObject* obj, QEvent* event) {
 	if (event->type() == QEvent::MouseButtonPress) {
 		if (obj == ui->label_1) {
-			GameWidget* game = new GameWidget();
+			GameWidgets* game = new GameWidgets();
 			game->iswujinmoshi = false;
 			game->dangqianguanqia = 1;
 			game->mubiaofenshu = 1500;
@@ -86,7 +81,7 @@ bool StartWidget::eventFilter(QObject* obj, QEvent* event) {
 			return true;
 		}
 		else if (obj == ui->label_2) {
-			GameWidget* game = new GameWidget();
+			GameWidgets* game = new GameWidgets();
 			game->iswujinmoshi = true;
 			game->dangqianguanqia = 1;
 			game->mubiaofenshu = 99999;
