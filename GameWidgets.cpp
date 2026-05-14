@@ -20,6 +20,12 @@ iswujinmoshi(false), mubiaofenshu(0), dangqianguanqia(1) {
         });
 }
 
+void GameWidgets::playbgm(QString path) {
+
+    PlaySound((LPCWSTR)path.utf16(), NULL, SND_ASYNC | SND_LOOP);
+}
+
+/*绘制游戏界面，绘制选中的红框*/
 void GameWidgets::paintEvent(QPaintEvent* event) {
     QWidget::paintEvent(event);
     Q_UNUSED(event);
@@ -60,16 +66,10 @@ void GameWidgets::paintEvent(QPaintEvent* event) {
         p.setPen(QPen(Qt::red, 4));
         p.drawRect(hx, hy, CELL_SIZE, CELL_SIZE);
     }
-
 }
 
-
-void GameWidgets::playbgm(QString path) {
-
-    PlaySound((LPCWSTR)path.utf16(), NULL, SND_ASYNC | SND_LOOP);
-}
-
-
+/*识别点击位置，响应炸弹的点击，触发炸弹爆炸逻辑
+并记录选中状态，实现选中红框的切换*/
 void GameWidgets::mousePressEvent(QMouseEvent* e)
 {
     const int X = (WIN_W - GAME_W) / 2;
@@ -154,6 +154,22 @@ void GameWidgets::mousePressEvent(QMouseEvent* e)
 
     update();
 }
+
+/*判断是否两个格子相邻*/
+bool GameWidgets::isAdjacent(int x1, int y1, int x2, int y2) {
+    int dx = abs(x1 - x2);
+    int dy = abs(y1 - y2);
+    return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
+}
+
+/*相邻的才可以进行交换*/
+void GameWidgets::swap(int x1, int y1, int x2, int y2) {
+    int t = map[y1][x1];
+    map[y1][x1] = map[y2][x2];
+    map[y2][x2] = t;
+}
+
+/*加载图标*/
 void GameWidgets::loadicons() {
     icons.resize(10);
     for (int i = 1; i <= 7; i++) {
@@ -170,6 +186,8 @@ void GameWidgets::loadicons() {
     QPixmap bomb("photos/8.jpg");
     icons[8] = bomb.scaled(CELL_SIZE - 4, CELL_SIZE - 4, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
+
+/*生成地图*/
 void GameWidgets::initMap() {
     map.resize(ROWS, QVector<int>(COLS));
     for (int i = 0; i < ROWS; i++) {
@@ -181,17 +199,7 @@ void GameWidgets::initMap() {
 
 }
 
-bool GameWidgets::isAdjacent(int x1, int y1, int x2, int y2) {
-    int dx = abs(x1 - x2);
-    int dy = abs(y1 - y2);
-    return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
-}
-
-void GameWidgets::swap(int x1, int y1, int x2, int y2) {
-    int t = map[y1][x1];
-    map[y1][x1] = map[y2][x2];
-    map[y2][x2] = t;
-}
+/*实现消除效果*/
 bool GameWidgets::checkAndClear() {
     bool cleared = false;
     QVector<QVector<bool>>toClear(ROWS, QVector<bool>(COLS, false));
@@ -249,6 +257,7 @@ bool GameWidgets::checkAndClear() {
     }
     return cleared;
 }
+
 void GameWidgets::zhadan(int x, int y)
 {
     if (x < 0 || x >= ROWS || y < 0 || y >= COLS) return;
@@ -297,42 +306,6 @@ void GameWidgets::zhadan(int x, int y)
         });
 }
 
-void GameWidgets::dadaofenshu() {
-    if (iswujinmoshi) return;
-    bool fenshudabiao = (score >= mubiaofenshu);
-    bool stepsyongwan = (steps <= 0);
-    if (!isgameover && fenshudabiao && stepsyongwan) {
-        isgameover = true;
-        score = 0;
-        playmaomi();
-    }
-    else if (stepsyongwan && !fenshudabiao && !isgameover) {
-        isgameover = true;
-        QTimer::singleShot(0, this, [=]() {
-            int ret = QMessageBox::question(this, "Level Failed!",
-                "Do you want to try again?",
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::Yes);
-            if (ret == QMessageBox::Yes) {
-                dangqianguanqia = 1;
-                mubiaofenshu = 1500;
-                steps = 30;;
-                score = 0;
-                firstSelected = QPoint{ -1,-1 };
-                highlightcell = QPoint{ -1,-1 };
-                initMap();
-                dropDown();
-                fillEmpty();
-                update();
-            }
-            else {
-                this->close();
-            }
-            isgameover = false;
-            });
-
-    }
-}
 void GameWidgets::nextlevel()
 {
     isgameover = true;
@@ -365,6 +338,48 @@ void GameWidgets::nextlevel()
 
     isgameover = false;
 }
+
+/*判定胜利条件*/
+void GameWidgets::dadaofenshu() {
+    if (iswujinmoshi) return;
+    bool fenshudabiao = (score >= mubiaofenshu);
+    bool stepsyongwan = (steps <= 0);
+
+    if (!isgameover && fenshudabiao && stepsyongwan) {
+        isgameover = true;
+        score = 0;
+        playmaomi();
+    }
+
+    else if (stepsyongwan && !fenshudabiao && !isgameover) {
+        isgameover = true;
+        QTimer::singleShot(0, this, [=]() {
+            int ret = QMessageBox::question(this, "Level Failed!",
+                "Do you want to try again?",
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::Yes);
+            if (ret == QMessageBox::Yes) {
+                dangqianguanqia = 1;
+                mubiaofenshu = 1500;
+                steps = 30;;
+                score = 0;
+                firstSelected = QPoint{ -1,-1 };
+                highlightcell = QPoint{ -1,-1 };
+                initMap();
+                dropDown();
+                fillEmpty();
+                update();
+            }
+            else {
+                this->close();
+            }
+            isgameover = false;
+            });
+
+    }
+}
+
+
 void GameWidgets::playmaomi()
 {
     isgameover = true;
@@ -378,6 +393,7 @@ void GameWidgets::playmaomi()
         // 选下一关：正常执行下一关逻辑
         nextlevel();
     }
+
     else
     {
         // 选关闭：播放猫咪视频，然后关闭窗口
@@ -386,6 +402,7 @@ void GameWidgets::playmaomi()
         this->close();
     }
 }
+
 
 void GameWidgets::dropDown()
 {
@@ -401,6 +418,7 @@ void GameWidgets::dropDown()
             }
         }
     }
+
     update();
 }
 

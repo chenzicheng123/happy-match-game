@@ -93,6 +93,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GameWidgets.cpp" />
+    <ClCompile Include="shiyanbaogao.cpp" />
     <ClCompile Include="StartWidget.cpp" />
     <QtRcc Include="QTcodes.qrc" />
     <QtUic Include="GameWidgets.ui">
